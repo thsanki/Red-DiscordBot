@@ -1,12 +1,36 @@
 name: Auto Labeler - PRs
 on:
+  # zizmor: ignore[dangerous-triggers] user input is correctly sanitized and minimal permissions are used
   pull_request_target:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - labeled
+      - unlabeled
+
+permissions: {}
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  label_pull_requests:
+    name: Apply automatic labels
+    runs-on: ubuntu-24.04
+    permissions:
+      pull-requests: write  # Needed to apply labels
     steps:
-      - name: Apply Type Label
-        uses: actions/labeler@v2
+      - name: Apply Category label
+        uses: actions/labeler@v4  # TODO: bump
         with:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
+          sync-labels: true
+
+      - name: Label documentation-only changes.
+        uses: Jackenmen/label-doconly-changes@v1
+        env:
+          LDC_LABELS: Docs-only
+          LDC_HOOK_UNCONDITIONAL__ALLOWED_FILES: |-
+            # default list of unconditionally allowed files
+            *.rst
+            *.md
+            # Red-specific includes
+            docs/.resources/*
